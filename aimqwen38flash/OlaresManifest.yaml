@@ -7,7 +7,7 @@ metadata:
   description: "Qwen3.8-Flash-Next (125B MoE) served locally with the Strata engine"
   appid: aimqwen38flash
   title: AIM Qwen3.8 Flash Next
-  version: '26.10.1'
+  version: '26.10.2'
   categories:
     - AI
     - Vision
@@ -36,9 +36,10 @@ spec:
   onlyAdmin: true
   versionName: 'Strata 0.1.39 · Qwen3.8-Flash-Next IQ3_XXS'
   upgradeDescription: |
-    26.10.1 First release: Qwen3.8-Flash-Next (125B MoE) on one 24 GB GPU via the
-    Strata engine, 200K context, INT8 KV with KV streaming, vision, OpenAI- and
-    Anthropic-compatible API.
+    26.10.2 Stable tuning: 2 concurrent slots (one large + one small context), German
+    draft vocabulary, 200K context, INT8 KV with 96K-cell KV streaming, faster long
+    prompts (32K prefill chunks), calibrated engine flags, learned expert profile.
+    First release was 26.10.1.
   fullDescription: |
     **Model Overview**
     Qwen3.8-Flash-Next is a 125B-parameter sparse Mixture-of-Experts model (512 routed
@@ -80,7 +81,7 @@ spec:
   requiredCpu: "4"
   limitedCpu: "16"
   requiredMemory: "8Gi"
-  limitedMemory: "56Gi"
+  limitedMemory: "60Gi"
   requiredDisk: 50Mi
   limitedDisk: 500Gi
   requiredGpu: 1

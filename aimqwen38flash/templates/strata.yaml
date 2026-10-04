@@ -129,7 +129,7 @@ spec:
               nvidia.com/gpu: "1"
             limits:
               cpu: "16"
-              memory: 56Gi
+              memory: 60Gi
               nvidia.com/gpu: "1"
 ---
 # Service name MUST be "vllm": llm-init derives http://vllm:8000 from

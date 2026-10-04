@@ -12,9 +12,10 @@ Ziel: stabil, `parallel 2` (ein großer + ein kleiner Kontext), minimaler Single
 Engine-Args:
 ```
 --max-context 200000 --kv int8 --kv-resident 98304 --vision
---prefill auto:32768 --spec 4 --spec-min-p 0.5
---vram-reserve-mib 1024 --pool-workers 12
+--prefill auto:32768 --spec 4 --spec-min-p 0.70 --suffix-draft 8
+--vram-reserve-mib 1024 --pool-workers 15
 --conversation-cache-mib 2048 --conversation-cache-slots 2
+--pcie-frac 0.20
 ```
 Top-Level-Keys:
 ```json
