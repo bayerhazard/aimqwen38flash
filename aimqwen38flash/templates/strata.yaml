@@ -1,0 +1,151 @@
+{{- $model := .Values.olaresEnv.MODEL | default "IQ3_XXS" -}}
+{{- $context := .Values.olaresEnv.CONTEXT | default "200000" -}}
+{{- $kv := .Values.olaresEnv.KV | default "int8" -}}
+{{- $vision := not (eq (toString (.Values.olaresEnv.VISION | default "cpu")) "no") -}}
+{{- $lowram := .Values.olaresEnv.LOW_RAM | default "off" -}}
+{{- $apiKey := .Values.olaresEnv.API_KEY | default "" -}}
+{{- $hfEndpoint := .Values.olaresEnv.HF_ENDPOINT | default "https://huggingface.co/" -}}
+{{- $hfToken := .Values.olaresEnv.HF_TOKEN | default "" -}}
+---
+# Strata engine Deployment. The image's entrypoint owns download + pack + start:
+# on the first run it runs `setup.py --setup --yes --no-start` into /data, then
+# serves the OpenAI/Anthropic API (llm-init proxies it as ENGINE_KIND=vllm).
+#
+# Deployment name == Release.Name (allowMultipleInstall); label/selector stays
+# io.kompose.service: vllm so llm-init derives http://vllm:8000.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: '{{ .Release.Name }}'
+  namespace: {{ .Release.Namespace }}
+  labels:
+    io.kompose.service: vllm
+spec:
+  replicas: {{ .Values.workloads.aimqwen38flash.replicaCount }}
+  selector:
+    matchLabels:
+      io.kompose.service: vllm
+  strategy:
+    # Recreate, never RollingUpdate: one GPU; a second pod would sit Pending.
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.network/chrome-default: "true"
+        io.kompose.service: vllm
+        app.bytetrade.io/shared-entrance: "true"
+        io.bytetrade.app: "true"
+        applications.app.bytetrade.io/name: "{{ .Release.Name }}"
+        applications.app.bytetrade.io/raw-app-name: "{{ .Release.Name }}"
+    spec:
+      enableServiceLinks: false
+      restartPolicy: Always
+      runtimeClassName: nvidia
+      securityContext:
+        fsGroup: 1000
+      volumes:
+        - name: strata-data
+          hostPath:
+            path: "{{ .Values.userspace.appCache }}/data"
+            type: DirectoryOrCreate
+      initContainers:
+        # hostPath dirs are created root-owned; the engine runs as UID 1000.
+        - name: init-permissions
+          image: docker.io/beclab/aboveos-busybox:1.37.0
+          command:
+            - sh
+            - -c
+            - "mkdir -p /data/config /data/models /data/packs /data/mtp && chown 1000:1000 /data /data/config || true"
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - {name: strata-data, mountPath: /data}
+      containers:
+        - name: strata
+          image: "{{ .Values.engine.image }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: STRATA_DATA
+              value: /data
+            - name: FAMILY
+              value: qwen
+            - name: MODEL
+              value: "{{ $model }}"
+            - name: CONTEXT
+              value: "{{ $context }}"
+            - name: KV
+              value: "{{ $kv }}"
+            - name: VISION
+              value: "{{ ternary "cpu" "no" $vision }}"
+            - name: LOW_RAM
+              value: "{{ $lowram }}"
+            - name: API_KEY
+              value: "{{ $apiKey }}"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "8000"
+            # Strata 0.1.38+ answers only known Host names without an API key;
+            # inside the cluster llm-init calls http://vllm:8000 (a name Strata
+            # does not know). The entrance is protected by Olares auth.
+            - name: STRATA_ALLOWED_HOSTS
+              value: "*"
+            - name: HF_ENDPOINT
+              value: "{{ $hfEndpoint }}"
+{{- if $hfToken }}
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: HF_TOKEN
+{{- end }}
+            - name: TZ
+              value: Etc/UTC
+          ports:
+            - name: http
+              containerPort: 8000
+          # Strata answers /health before the API key gate; the first boot
+          # downloads ~76 GB, so keep the probe generous.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 40
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 10
+          volumeMounts:
+            - {name: strata-data, mountPath: /data}
+          resources:
+            requests:
+              cpu: "2"
+              memory: 8Gi
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "16"
+              memory: 56Gi
+              nvidia.com/gpu: "1"
+---
+# Service name MUST be "vllm": llm-init derives http://vllm:8000 from
+# ENGINE_KIND=vllm. Port 8000 is the engine's PORT. Internal only.
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm
+  namespace: {{ .Release.Namespace }}
+  labels:
+    io.kompose.service: vllm
+spec:
+  selector:
+    io.kompose.service: vllm
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP

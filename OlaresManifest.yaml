@@ -1,0 +1,211 @@
+olaresManifest.version: '0.12.0'
+olaresManifest.type: app
+apiVersion: 'v3'
+metadata:
+  name: aimqwen38flash
+  icon: https://raw.githubusercontent.com/bayerhazard/aimqwen38flash/main/icon.png
+  description: "Qwen3.8-Flash-Next (125B MoE) served locally with the Strata engine"
+  appid: aimqwen38flash
+  title: AIM Qwen3.8 Flash Next
+  version: '26.10.1'
+  categories:
+    - AI
+    - Vision
+sharedEntrances:
+  - name: aimqwen38flash
+    host: sharedentrances-api
+    port: 0
+    title: AIM Qwen3.8 Flash Next
+    invisible: true
+    authLevel: internal
+    icon: https://raw.githubusercontent.com/bayerhazard/aimqwen38flash/main/icon.png
+entrances:
+  - name: aimqwen38flash
+    port: 8090
+    host: download-svc
+    title: AIM Qwen3.8 Flash Next
+    icon: https://raw.githubusercontent.com/bayerhazard/aimqwen38flash/main/icon.png
+    openMethod: window
+    authLevel: internal
+#   aimqwen38flash — Strata engine Deployment (== appid / Release.Name)
+#   llminit         — llm-init / entrance+proxy Deployment
+workloadReplicas:
+  aimqwen38flash: 1
+  llminit: 1
+spec:
+  onlyAdmin: true
+  versionName: 'Strata 0.1.39 · Qwen3.8-Flash-Next IQ3_XXS'
+  upgradeDescription: |
+    26.10.1 First release: Qwen3.8-Flash-Next (125B MoE) on one 24 GB GPU via the
+    Strata engine, 200K context, INT8 KV with KV streaming, vision, OpenAI- and
+    Anthropic-compatible API.
+  fullDescription: |
+    **Model Overview**
+    Qwen3.8-Flash-Next is a 125B-parameter sparse Mixture-of-Experts model (512 routed
+    experts per layer, 10 active per token, ~6B active) with thinking, tool-calling and
+    native image understanding.
+
+    **Inference Engine**
+    Strata runs the GSQ-RCO IQ3_XXS quantization on one consumer GPU: the experts live in
+    system RAM, the busiest few thousand are cached in VRAM, the large n-gram table stays
+    memory-mapped, and MTP speculative decoding speeds up answers.
+
+    **Key Features**
+    Strata 0.1.39, IQ3_XXS (3.0 bpw), 200K context, INT8 KV with KV streaming
+    Vision (CPU encoder), OpenAI- and Anthropic-compatible API
+    Expert cache on the GPU, CPU expert pool on the host
+
+    **API**
+    OpenAI-compatible (/v1/chat/completions), Anthropic-compatible (/v1/messages)
+
+    **Resource Usage**
+    ~50 GB system RAM, one NVIDIA GPU (VRAM expert cache) — the model data lives in the
+    app cache on the local disk.
+  developer: Niko1221
+  website: https://github.com/Niko1221/Strata
+  sourceCode: https://github.com/Niko1221/Strata
+  submitter: bayerhazard
+  locale:
+    - en-US
+    - de-DE
+  license:
+    - text: MIT
+      url: https://github.com/Niko1221/Strata/blob/main/LICENSE
+  # Exclusive-GPU app: flat resource envelope (no accelerator[]). Olares 1.12.7
+  # patches a HAMi nvidia.com/gpumem limit to 0 on suspend, which then fails
+  # validation against a lingering gpumem request; requiredGpu: 1 -> nvidia.com/gpu
+  # avoids that (same pattern as the 27B/35B charts).
+  supportArch:
+    - amd64
+  requiredCpu: "4"
+  limitedCpu: "16"
+  requiredMemory: "8Gi"
+  limitedMemory: "56Gi"
+  requiredDisk: 50Mi
+  limitedDisk: 500Gi
+  requiredGpu: 1
+permission:
+  appCache: true
+  appCommon: true
+options:
+  apiTimeout: 0
+  LLMGatewaySupported: true
+  allowMultipleInstall: true
+  shared: true
+  templateOnly: false
+  dependencies:
+    - name: olares
+      version: '>=1.12.6-0'
+      type: system
+envs:
+  # llm-init's model card (Router builds the model entry from these).
+  - envName: MODEL_NAME
+    required: true
+    type: string
+    editable: false
+    applyOnChange: false
+    default: "qwen3.8-flash-next"
+    description: "The served model id; llm-init advertises it to Router."
+  - envName: MODEL_MODE
+    required: true
+    type: string
+    editable: false
+    applyOnChange: false
+    default: "chat"
+    options:
+      - title: Chat
+        value: chat
+  - envName: MODEL_SUPPORTS
+    required: true
+    type: string
+    editable: false
+    applyOnChange: false
+    default: "thinking,tools,vision"
+    multiSelect: true
+    splitter: ","
+    options:
+      - title: Vision
+        value: vision
+      - title: Tools
+        value: tools
+      - title: Thinking
+        value: thinking
+      - title: None
+        value: none
+  # The Strata engine knobs, expanded by the chart to the container's env.
+  - envName: MODEL
+    required: true
+    type: string
+    editable: false
+    applyOnChange: false
+    default: "IQ3_XXS"
+    options:
+      - title: "IQ3_XXS (3.0 bpw, recommended)"
+        value: IQ3_XXS
+      - title: "IQ2_XS (2.5 bpw, faster)"
+        value: IQ2_XS
+      - title: "Q2_0 (2.4 bpw, fastest)"
+        value: Q2_0
+      - title: "IQ3_S (3.5 bpw, best quality)"
+        value: IQ3_S
+  - envName: CONTEXT
+    required: true
+    type: string
+    editable: true
+    applyOnChange: true
+    default: "200000"
+    description: "Context window in tokens (max 262144; a change takes effect on restart and needs REINSTALL=1 to rewrite the config)."
+  - envName: KV
+    required: false
+    type: string
+    editable: true
+    applyOnChange: true
+    default: "int8"
+    options:
+      - title: "int8 (best quality, streams from 64K)"
+        value: int8
+      - title: "k8v4 (23% less KV VRAM, no streaming)"
+        value: k8v4
+      - title: "q4_0 (half KV VRAM, lower precision)"
+        value: q4_0
+  - envName: VISION
+    required: false
+    type: string
+    editable: true
+    applyOnChange: true
+    default: "cpu"
+    options:
+      - title: "CPU encoder"
+        value: cpu
+      - title: "GPU encoder"
+        value: gpu
+      - title: "Off"
+        value: "no"
+  - envName: LOW_RAM
+    required: false
+    type: string
+    editable: true
+    applyOnChange: true
+    default: "off"
+    options:
+      - title: "Off (experts resident in RAM)"
+        value: "off"
+      - title: "On (mmap experts from disk, slower)"
+        value: "on"
+  - envName: API_KEY
+    required: false
+    type: string
+    editable: true
+    applyOnChange: true
+    default: ""
+    description: "Optional API key for the Strata server. Leave empty inside the cluster; the entrance is protected by Olares auth."
+  - envName: HF_ENDPOINT
+    required: false
+    applyOnChange: true
+    valueFrom:
+      envName: OLARES_SYSTEM_HUGGINGFACE_SERVICE
+  - envName: HF_TOKEN
+    required: false
+    applyOnChange: true
+    valueFrom:
+      envName: OLARES_SYSTEM_HUGGINGFACE_TOKEN

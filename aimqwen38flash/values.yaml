@@ -1,0 +1,30 @@
+# Per-workload replica counts (keys match Deployment metadata.name and
+# workloadReplicas in OlaresManifest).
+#   aimqwen38flash — Strata engine Deployment (== appid / Release.Name)
+#   llminit        — llm-init / entrance Deployment
+workloads:
+  llminit:
+    replicaCount: 1
+  aimqwen38flash:
+    replicaCount: 1
+
+# The Strata engine image. Built by .github/workflows/build-image.yml from
+# github.com/Niko1221/Strata at v0.1.39 (engine compiled in the image, sm_120).
+engine:
+  image: ghcr.io/bayerhazard/strata:0.1.39
+
+# Olares overwrites this map with the user's env values at install time. The
+# keys must exist for a bare `helm template`/lint to render at all — reading
+# .Values.olaresEnv.X on a missing map is a nil pointer, not an empty string.
+olaresEnv:
+  MODEL_NAME: "qwen3.8-flash-next"
+  MODEL_MODE: "chat"
+  MODEL_SUPPORTS: "thinking,tools,vision"
+  MODEL: "IQ3_XXS"
+  CONTEXT: "200000"
+  KV: "int8"
+  VISION: "cpu"
+  LOW_RAM: "off"
+  API_KEY: ""
+  HF_ENDPOINT: "https://huggingface.co/"
+  HF_TOKEN: ""
