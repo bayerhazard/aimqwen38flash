@@ -1,0 +1,70 @@
+name: Build Strata image
+
+# Builds the Strata inference engine (github.com/Niko1221/Strata) into a
+# pullable CUDA image for Olares (amd64, RTX 50 / sm_120). The engine is
+# compiled during the build; the first container start only downloads the model.
+on:
+  workflow_dispatch:
+    inputs:
+      pin:
+        description: 'Strata tag/commit to build (default: v0.1.39)'
+        required: false
+        default: 'v0.1.39'
+      tag:
+        description: 'Image tag (default: the pin, without a leading v)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    env:
+      PIN: ${{ inputs.pin || 'v0.1.39' }}
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${PIN#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Clone Strata at the pin
+        run: git clone --depth 1 --branch "$PIN" https://github.com/Niko1221/Strata.git strata-src
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: strata-src
+          file: strata-src/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/bayerhazard/strata:${{ steps.tag.outputs.tag }}
+            ghcr.io/bayerhazard/strata:latest
+          build-args: |
+            CUDA_ARCHITECTURES=120
+            BUILD_VISION=1
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "## Image pushed" >> "$GITHUB_STEP_SUMMARY"
+          echo "**ghcr.io/bayerhazard/strata:${{ steps.tag.outputs.tag }}** (Strata ${{ env.PIN }})" >> "$GITHUB_STEP_SUMMARY"
