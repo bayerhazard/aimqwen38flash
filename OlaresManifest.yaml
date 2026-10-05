@@ -7,7 +7,7 @@ metadata:
   description: "Qwen3.8-Flash-Next (125B MoE) served locally with the Strata engine"
   appid: aimqwen38flash
   title: AIM Qwen3.8 Flash Next
-  version: '26.10.4'
+  version: '26.10.5'
   categories:
     - AI
 sharedEntrances:
@@ -35,6 +35,7 @@ spec:
   onlyAdmin: true
   versionName: 'Strata 0.1.39 · Qwen3.8-Flash-Next Uncensored IQ3_XXS'
   upgradeDescription: |
+    26.10.5 Context restored to 200K with parallel 2 + vision (67 GiB container; Orca expert arena 49.8 GiB). CPU right-sizing of the worker GPU apps freed the node headroom. Built for Olares 1.12.6.
     26.10.4 Concurrency + vision: parallel 2 (two conversations decoded together,
     no queueing) and the image encoder (CPU), both active at a 131K context within
     the 60 GiB container. A/B-validated: 112/107 t/s (on par with the 200K
@@ -84,7 +85,7 @@ spec:
   requiredCpu: "4"
   limitedCpu: "16"
   requiredMemory: "8Gi"
-  limitedMemory: "60Gi"
+  limitedMemory: "67Gi"
   requiredDisk: 50Mi
   limitedDisk: 500Gi
   requiredGpu: 1
