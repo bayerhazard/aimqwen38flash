@@ -7,10 +7,9 @@ metadata:
   description: "Qwen3.8-Flash-Next (125B MoE) served locally with the Strata engine"
   appid: aimqwen38flash
   title: AIM Qwen3.8 Flash Next
-  version: '26.10.2'
+  version: '26.10.3'
   categories:
     - AI
-    - Vision
 sharedEntrances:
   - name: aimqwen38flash
     host: sharedentrances-api
@@ -34,26 +33,27 @@ workloadReplicas:
   llminit: 1
 spec:
   onlyAdmin: true
-  versionName: 'Strata 0.1.39 · Qwen3.8-Flash-Next IQ3_XXS'
+  versionName: 'Strata 0.1.39 · Qwen3.8-Flash-Next Uncensored IQ3_XXS'
   upgradeDescription: |
-    26.10.2 Stable tuning: 2 concurrent slots (one large + one small context), German
-    draft vocabulary, 200K context, INT8 KV with 96K-cell KV streaming, faster long
-    prompts (32K prefill chunks), calibrated engine flags, learned expert profile.
-    First release was 26.10.1.
+    26.10.3 Model switch: OrcaRouter Uncensored (abliterated) IQ3_XXS — refusal-free
+    Hermes/coding agent. 200K context, INT8 KV, MTP speculation, A/B-validated against
+    the GSQ-RCO baseline (decode on par, +6% on prose, needle 25/25, tools 7/7,
+    agentic 30/30). Text-only (no vision). Built for Olares 1.12.6.
   fullDescription: |
     **Model Overview**
     Qwen3.8-Flash-Next is a 125B-parameter sparse Mixture-of-Experts model (512 routed
-    experts per layer, 10 active per token, ~6B active) with thinking, tool-calling and
-    native image understanding.
+    experts per layer, 10 active per token, ~6B active) with thinking and tool-calling.
+    This build serves the OrcaRouter **Uncensored (abliterated)** IQ3_XXS fine-tune: a
+    refusal-free assistant tuned for long-horizon agentic and coding work.
 
     **Inference Engine**
-    Strata runs the GSQ-RCO IQ3_XXS quantization on one consumer GPU: the experts live in
-    system RAM, the busiest few thousand are cached in VRAM, the large n-gram table stays
-    memory-mapped, and MTP speculative decoding speeds up answers.
+    Strata runs the IQ3_XXS quantization on one consumer GPU: the experts live in
+    system RAM, the busiest few thousand are cached in VRAM, and MTP speculative
+    decoding speeds up answers.
 
     **Key Features**
-    Strata 0.1.39, IQ3_XXS (3.0 bpw), 200K context, INT8 KV with KV streaming
-    Vision (CPU encoder), OpenAI- and Anthropic-compatible API
+    Strata 0.1.39, Uncensored IQ3_XXS (3.0 bpw), 200K context, INT8 KV
+    Text-only, OpenAI- and Anthropic-compatible API
     Expert cache on the GPU, CPU expert pool on the host
 
     **API**
@@ -121,7 +121,7 @@ envs:
     type: string
     editable: false
     applyOnChange: false
-    default: "thinking,tools,vision"
+    default: "thinking,tools"
     multiSelect: true
     splitter: ","
     options:
@@ -149,6 +149,18 @@ envs:
         value: Q2_0
       - title: "IQ3_S (3.5 bpw, best quality)"
         value: IQ3_S
+  - envName: MODEL_VARIANT
+    required: false
+    type: string
+    editable: false
+    applyOnChange: false
+    default: "orca"
+    options:
+      - title: "OrcaRouter Uncensored (abliterated, text-only)"
+        value: "orca"
+      - title: "GSQ-RCO base (upstream, vision-capable)"
+        value: ""
+    description: "orca pins the pre-seeded abliterated IQ3_XXS config (seed-strata-config initContainer); empty uses the upstream GSQ-RCO setup path."
   - envName: CONTEXT
     required: true
     type: string

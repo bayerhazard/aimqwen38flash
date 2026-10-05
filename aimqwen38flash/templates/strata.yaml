@@ -60,6 +60,57 @@ spec:
             runAsUser: 0
           volumeMounts:
             - {name: strata-data, mountPath: /data}
+{{- if eq (toString (.Values.olaresEnv.MODEL_VARIANT | default "")) "orca" }}
+        # Orca variant: no setup.py path exists (the app ships a manual pack). When
+        # the pre-seeded Orca model + pack are present, pin the tuned config as the
+        # live config the entrypoint starts, so `setup` never overwrites it.
+        - name: seed-strata-config
+          image: docker.io/beclab/aboveos-busybox:1.37.0
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              ORCA=/data/models/orca-iq3_xxs
+              SHARD="$ORCA/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf"
+              if [ -d /data/packs/orca-iq3_xxs ] && [ -f "$SHARD" ]; then
+                cat > /data/config/strata-iq3_xxs.json <<'JSON'
+              {
+               "exe": "/opt/strata/engine/strata",
+               "args": [
+                "--pack", "/data/packs/orca-iq3_xxs",
+                "--native", "/data/models/orca-iq3_xxs/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf",
+                "--ple-gguf", "/data/models/orca-iq3_xxs/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf",
+                "--expert-profile", "/opt/strata/data/expert-profile.bin",
+                "--expert-cache", "auto",
+                "--prefill", "auto:32768",
+                "--spec", "4",
+                "--spec-min-p", "0.70",
+                "--mtp", "/data/mtp/rt",
+                "--max-context", "200000",
+                "--kv", "int8",
+                "--suffix-draft", "8",
+                "--pool-workers", "15"
+               ],
+               "cwd": "/opt/strata",
+               "tokenizer": "/data/packs/orca-iq3_xxs/tokenizer",
+               "model_name": "qwen3.8-flash-next-orca-iq3_xxs",
+               "port": 8000,
+               "host": "0.0.0.0",
+               "aliases": ["qwen3.8-flash-next"],
+               "reasoning_budget_tokens": 8192,
+               "fit_max_tokens": true
+              }
+              JSON
+                echo "seeded Orca config"
+              else
+                echo "Orca files missing (packs/orca-iq3_xxs + models/orca-iq3_xxs); leaving config to setup"
+              fi
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - {name: strata-data, mountPath: /data}
+{{- end }}
       containers:
         - name: strata
           image: "{{ .Values.engine.image }}"

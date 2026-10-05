@@ -5,7 +5,28 @@ Die Engine-Startargumente und Draft-Vokabeln liegen **nicht** im Chart, sondern 
 Ein `setup`-Lauf überschreibt die Config — nach einem Reinstall die Werte unten neu anwenden
 (`scripts/strata_cfgset.py`).
 
-## Validierte Produktions-Config (2026-10-04)
+## Aktuelle Produktion (26.10.3): OrcaRouter Uncensored IQ3_XXS
+
+Seit 26.10.3 läuft die **abliterierte OrcaRouter-Variante** (refusal-free Agent/Coding).
+Der Chart-`MODEL_VARIANT=orca`-Pfad schreibt die getunte Config über den
+`seed-strata-config`-InitContainer, sobald `packs/orca-iq3_xxs` + `models/orca-iq3_xxs`
+im appCache liegen — kein `setup`-Lauf, keine Neukonfiguration. **Text-only (kein Vision).**
+
+Seeding (einmalig pro Node, ext4/appCache):
+```
+# 1. Download (resumable) in <appCache>/data/models/orca-iq3_xxs/
+#    orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF: IQ3_XXS-0000{1,2}-of-00002.gguf + MTP-draft.gguf
+# 2. Pack im Strata-Image-Container:
+STRATA_GGUF_PY=/opt/strata/third_party/llama.cpp/gguf-py .venv/bin/python tools/iq_pack.py \
+  --gguf <shard1> --out /data/packs/orca-iq3_xxs --compat-bf16
+# 3. MTP-Runtime /data/mtp/rt (GSQ-RCO-Draft-Head, mit dem Basismodell kompatibel — docs/ORCA.md)
+```
+Validiert 2026-10-05 (RTX 5090, 60-GiB-Container): space-invaders **112 t/s**, prose **107 t/s**,
+Needle **25/25**, KV-Stress 32K/131K/196K **85,5/88,7/90,8 t/s**, Tool **7/7**, Agentic **30/30**.
+`--kv-resident`/`parallel 2`/Conversation-Cache passen für Orca **nicht** in die 60-GiB-cgroup
+(→ OOM); sie sind in der Orca-Config bewusst weggelassen.
+
+## Validierte GSQ-RCO-Config (2026-10-04, 26.10.2 — Fallback, `MODEL_VARIANT=""`)
 
 Ziel: stabil, `parallel 2` (ein großer + ein kleiner Kontext), minimaler Single-Stream-Impact.
 
