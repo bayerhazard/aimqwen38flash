@@ -60,10 +60,12 @@ spec:
             runAsUser: 0
           volumeMounts:
             - {name: strata-data, mountPath: /data}
-{{- if eq (toString (.Values.olaresEnv.MODEL_VARIANT | default "")) "orca" }}
-        # Orca variant: no setup.py path exists (the app ships a manual pack). When
-        # the pre-seeded Orca model + pack are present, pin the tuned config as the
-        # live config the entrypoint starts, so `setup` never overwrites it.
+{{- if eq (toString (.Values.olaresEnv.MODEL_VARIANT | default "")) "sc117" }}
+        # SC117 variant: abliterated GSQ-RCO build (the OrcaRouter refusal
+        # direction transplanted into ISTA-DASLab's GSQ-RCO quantization, which
+        # keeps the ~2-bit expert arena: ~40 GiB instead of ~50 GiB for Orca).
+        # No setup.py path exists (manual pack). When the SC117 model + pack are
+        # present, pin the tuned config as the live config the entrypoint starts.
         - name: seed-strata-config
           image: docker.io/beclab/aboveos-busybox:1.37.0
           command:
@@ -71,17 +73,18 @@ spec:
             - -c
             - |
               set -e
-              ORCA=/data/models/orca-iq3_xxs
-              SHARD="$ORCA/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf"
+              M=/data/models/sc117-iq3_xxs
+              S1="$M/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00001-of-00002.gguf"
+              S2="$M/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00002-of-00002.gguf"
               MMPROJ=/data/models/mmproj-Qwen3.8-Flash-Next-BF16.gguf
-              if [ -d /data/packs/orca-iq3_xxs ] && [ -f "$SHARD" ] && [ -f "$MMPROJ" ]; then
+              if [ -d /data/packs/sc117-iq3_xxs ] && [ -f "$S1" ] && [ -f "$S2" ] && [ -f "$MMPROJ" ]; then
                 cat > /data/config/strata-iq3_xxs.json <<'JSON'
               {
                "exe": "/opt/strata/engine/strata",
                "args": [
-                "--pack", "/data/packs/orca-iq3_xxs",
-                "--native", "/data/models/orca-iq3_xxs/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf",
-                "--ple-gguf", "/data/models/orca-iq3_xxs/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf",
+                "--pack", "/data/packs/sc117-iq3_xxs",
+                "--native", "/data/models/sc117-iq3_xxs/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00001-of-00002.gguf",
+                "--ple-gguf", "/data/models/sc117-iq3_xxs/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00002-of-00002.gguf",
                 "--expert-profile", "/opt/strata/data/expert-profile.bin",
                 "--expert-cache", "auto",
                 "--prefill", "auto:32768",
@@ -99,8 +102,8 @@ spec:
                 "--vram-reserve-mib", "1024"
                ],
                "cwd": "/opt/strata",
-               "tokenizer": "/data/packs/orca-iq3_xxs/tokenizer",
-               "model_name": "qwen3.8-flash-next-orca-iq3_xxs",
+               "tokenizer": "/data/packs/sc117-iq3_xxs/tokenizer",
+               "model_name": "qwen3.8-flash-next-sc117-iq3_xxs",
                "port": 8000,
                "host": "0.0.0.0",
                "aliases": ["qwen3.8-flash-next"],
@@ -110,16 +113,16 @@ spec:
                "vision": {
                 "exe": "/opt/strata/engine/strata-vision",
                 "mmproj": "/data/models/mmproj-Qwen3.8-Flash-Next-BF16.gguf",
-                "model": "/data/models/orca-iq3_xxs/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf",
+                "model": "/data/models/sc117-iq3_xxs/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_XXS-00001-of-00002.gguf",
                 "gpu": false,
                 "max_tokens": 300,
                 "threads": 12
                }
               }
               JSON
-                echo "seeded Orca config (parallel 2 + vision, 131K)"
+                echo "seeded SC117 config (GSQ-RCO abliterated, parallel 2 + vision)"
               else
-                echo "Orca files missing (packs/orca-iq3_xxs + models/orca-iq3_xxs + mmproj); leaving config to setup"
+                echo "SC117 files missing (packs/sc117-iq3_xxs + models/sc117-iq3_xxs + mmproj); leaving config to setup"
               fi
           securityContext:
             runAsUser: 0

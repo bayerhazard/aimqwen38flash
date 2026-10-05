@@ -4,10 +4,10 @@ apiVersion: 'v3'
 metadata:
   name: aimqwen38flash
   icon: https://raw.githubusercontent.com/bayerhazard/aimqwen38flash/main/icon.png
-  description: "Qwen3.8-Flash-Next (125B MoE) served locally with the Strata engine"
+  description: "Qwen3.8-Flash-Next Uncensored (125B MoE), GSQ-RCO-abliterated, served locally with the Strata engine"
   appid: aimqwen38flash
   title: AIM Qwen3.8 Flash Next
-  version: '26.10.6'
+  version: '26.10.7'
   categories:
     - AI
 sharedEntrances:
@@ -33,39 +33,37 @@ workloadReplicas:
   llminit: 1
 spec:
   onlyAdmin: true
-  versionName: 'Strata 0.1.39 · Qwen3.8-Flash-Next Uncensored IQ3_XXS'
+  versionName: 'Strata 0.1.39 · Qwen3.8-Flash-Next GSQ-RCO-abliterated IQ3_XXS'
   upgradeDescription: |
-    26.10.5 Context restored to 200K with parallel 2 + vision (67 GiB container; Orca expert arena 49.8 GiB). CPU right-sizing of the worker GPU apps freed the node headroom. Built for Olares 1.12.6.
-    26.10.4 Concurrency + vision: parallel 2 (two conversations decoded together,
-    no queueing) and the image encoder (CPU), both active at a 131K context within
-    the 60 GiB container. A/B-validated: 112/107 t/s (on par with the 200K
-    baseline), needle 25/25, tools 7/7, agentic 30/30. Previously text-only /
-    single-slot. Built for Olares 1.12.6.
+    26.10.7 Switched to the SC117 GSQ-RCO-abliterated quant: the same refusal-free
+    behaviour (the abliteration is transplanted from the OrcaRouter model), but the
+    GSQ-RCO expert arena needs ~40 GiB instead of ~50 GiB - ~10 GiB less host RAM at
+    the same 200K INT8 KV and throughput. Built for Olares 1.12.6.
+    26.10.5 Context restored to 200K with parallel 2 + vision (67 GiB container). Built for Olares 1.12.6.
   fullDescription: |
     **Model Overview**
-    Qwen3.8-Flash-Next is a 125B-parameter sparse Mixture-of-Experts model (512 routed
-    experts per layer, 10 active per token, ~6B active) with thinking and tool-calling.
-    This build serves the OrcaRouter **Uncensored (abliterated)** IQ3_XXS fine-tune: a
-    refusal-free assistant tuned for long-horizon agentic and coding work, with image
-    understanding and two concurrent conversation slots.
+    AImighty flagship stack. Qwen3.8-Flash-Next is a 125B-parameter sparse
+    Mixture-of-Experts model with thinking and tool-calling. This build serves
+    GSQ-RCO-abliterated: a refusal-free assistant tuned for long-horizon agentic and
+    coding work, with image understanding and two concurrent conversation slots.
 
     **Inference Engine**
-    Strata runs the IQ3_XXS quantization on one consumer GPU: the experts live in
-    system RAM, the busiest few thousand are cached in VRAM, and MTP speculative
-    decoding speeds up answers.
+    Strata runs the model on one consumer GPU: the experts live in system RAM, the
+    busiest few thousand are cached in VRAM, and MTP speculative decoding speeds up
+    answers.
 
     **Key Features**
-    Strata 0.1.39, Uncensored IQ3_XXS (3.0 bpw), 131K context, INT8 KV
-    Parallel 2 (two conversations at once), image encoder (CPU), OpenAI- and
-    Anthropic-compatible API
-    Expert cache on the GPU, CPU expert pool on the host
+    - KV cache 200,000 (INT8)
+    - Parallel 2 (two conversations at once)
+    - Image encoder (CPU)
+    - OpenAI- and Anthropic-compatible API
 
     **API**
     OpenAI-compatible (/v1/chat/completions), Anthropic-compatible (/v1/messages)
 
     **Resource Usage**
-    ~50 GB system RAM, one NVIDIA GPU (VRAM expert cache) — the model data lives in the
-    app cache on the local disk.
+    ~40 GB system RAM, one NVIDIA GPU (VRAM expert cache) — the model data lives in
+    the app cache on the local disk.
   developer: Niko1221
   website: https://github.com/Niko1221/Strata
   sourceCode: https://github.com/Niko1221/Strata

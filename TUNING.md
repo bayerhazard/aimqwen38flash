@@ -5,40 +5,35 @@ Die Engine-Startargumente und Draft-Vokabeln liegen **nicht** im Chart, sondern 
 Ein `setup`-Lauf überschreibt die Config — nach einem Reinstall die Werte unten neu anwenden
 (`scripts/strata_cfgset.py`).
 
-## Aktuelle Produktion (26.10.4): OrcaRouter Uncensored IQ3_XXS — parallel 2 + Vision
+## Aktuelle Produktion (26.10.7): SC117 GSQ-RCO-abliterated IQ3_XXS — parallel 2 + Vision
 
-Seit 26.10.4 läuft die **abliterierte OrcaRouter-Variante** mit **zwei aktiven Features**:
-**`parallel 2`** (zwei Unterhaltungen gleichzeitig) und **Vision (CPU-Encoder)** — beides
-im 60-GiB-Container stabil, bei **131K Kontext**. Der Chart-`MODEL_VARIANT=orca`-Pfad
-schreibt die getunte Config über den `seed-strata-config`-InitContainer, sobald
-`packs/orca-iq3_xxs`, `models/orca-iq3_xxs` und `mmproj-Qwen3.8-Flash-Next-BF16.gguf`
-im appCache liegen — kein `setup`-Lauf.
+Seit 26.10.7 läuft **SC117** (`SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF`): die
+OrcaRouter-Abliteration ist in **ISTA-DASLab's GSQ-RCO-Quant** transplantiert (144
+„write-to-residual-stream"-Tensoren) und behält damit die **~2-bit-Experten-Arena**.
+Der Chart-`MODEL_VARIANT=sc117`-Pfad schreibt die getunte Config über den
+`seed-strata-config`-InitContainer, sobald `packs/sc117-iq3_xxs`, `models/sc117-iq3_xxs`
+und `mmproj-Qwen3.8-Flash-Next-BF16.gguf` im appCache liegen — kein `setup`-Lauf.
 
-**Speicher-Fenster (gemessen, 60-GiB-cgroup):** Die Orca-Experten-Arena belegt ~53 GiB anon.
-`parallel 2` braucht `--kv-resident` (KV-Streaming nach RAM); die residente Fenstergröße
-bestimmt den shmem-Anteil. Rezept:
+**Speicher (gemessen):** Die SC117-Arena (`gu=IQ2_XS`, `down=IQ4_NL`, Arena_total 42,91 GB)
+belegt **~40 GiB** statt ~53 GiB (Orca) → **~10 GiB weniger Host-RAM** bei **200K + parallel 2
++ Vision** und gleichem/höherem Durchsatz (A/B: ~102 vs. ~85 t/s, `ram_blobs=0`, nativer
+Strata-Pfad). `--kv-resident 98304`, `parallel 2`, Vision und `limitedMemory 67Gi` unverändert.
+**PLE (`--ple-gguf`) = Shard 2** (nicht Shard 1 wie bei Orca).
 
-| Kontext | `--kv-resident` | shmem | Ergebnis |
-|---|---|---|---|
-| 64K | 32768 | ~4,6 G | stabil |
-| **131K** | **32768** | **~5,7 G** | **stabil (Produktion)** |
-| 131K | 65536 | 8,5 G+ | OOM |
-| 200K | 32768/98304 | ≥5,7 G | **OOM** (anon 53 + shmem → >60) |
-
-**200K + parallel 2 + Vision passt NICHT in 60 GiB** (OOM beim Laden oder unter Last).
-Optionen dafür: (a) Container-`limitedMemory` auf ~72 GiB anheben (Node hat 96 GB; Chart
-`limitedMemory` anpassen + Install/Upgrade), oder (b) `--mmap-experts` (stabil, aber
-**~85 % langsamer**, verworfen). Produktionsentscheidung: **131K** (voller Speed).
+> Historie Orca (26.10.3–26.10.6): Arena ~53 GiB anon; `--compat-bf16`-Pack nötig, weil
+> Orcas IQ3_XXS Dense/Attn auf Nicht-BF16-Typen komprimiert. 26.10.7 ersetzt das durch
+> SC117 (GSQ-RCO nativ, kein compat-Pack).
 
 Seeding (einmalig pro Node, ext4/appCache):
 ```
-# 1. Download (resumable, gated! Zugriff auf HF-Repo beantragen) nach <appCache>/data/models/orca-iq3_xxs/
-#    orcarouter/Qwen3.8-Flash-Next-Uncensored-GGUF: IQ3_XXS-0000{1,2}-of-00002.gguf + MTP-draft.gguf
-#    + mmproj-Qwen3.8-Flash-Next-BF16.gguf (ISTA-DASLab) nach <appCache>/data/models/
-# 2. Pack im Strata-Image-Container:
+# 1. Download (resumable, NICHT gated) nach <appCache>/data/models/sc117-iq3_xxs/
+#    SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF: IQ3_XXS/…-0000{1,2}-of-00002.gguf
+#    + mmproj-Qwen3.8-Flash-Next-BF16.gguf nach <appCache>/data/models/ (bereits vorhanden)
+#    shard1 size 47342144896 sha256 03b11926…dc5 · shard2 size 28800138432 sha256 316b46f3…e113
+# 2. Pack im Strata-Image-Container (OHNE --compat-bf16; GSQ-RCO ist nativ):
 STRATA_GGUF_PY=/opt/strata/third_party/llama.cpp/gguf-py .venv/bin/python tools/iq_pack.py \
-  --gguf <shard1> --out /data/packs/orca-iq3_xxs --compat-bf16
-# 3. MTP-Runtime /data/mtp/rt (GSQ-RCO-Draft-Head, mit dem Basismodell kompatibel — docs/ORCA.md)
+  --gguf <shard1> --out /data/packs/sc117-iq3_xxs
+# 3. MTP-Runtime: /data/mtp/rt ist identisch mit SC117s strata/rt (dense.bin/experts.bin bytegleich)
 ```
 Validiert 2026-10-05 (RTX 5090, 60-GiB-Container, 131K + parallel 2 + Vision):
 space-invaders **112,7 t/s**, prose **106,9 t/s**, Vision liest Text korrekt,

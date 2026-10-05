@@ -21,12 +21,14 @@ olaresEnv:
   MODEL_MODE: "chat"
   MODEL_SUPPORTS: "thinking,tools,vision"
   # MODEL selects the Strata setup path (IQ3_XXS = GSQ-RCO base, auto-download).
-  # MODEL_VARIANT=orca pins the pre-seeded, manually packed OrcaRouter
-  # abliterated IQ3_XXS instead; its config (parallel 2 + vision, 131K) is written
-  # by the seed-strata-config initContainer when /data/packs/orca-iq3_xxs, the
-  # Orca GGUFs and the mmproj are present. See TUNING.md.
+  # MODEL_VARIANT=sc117 pins the pre-seeded, manually packed SC117
+  # GSQ-RCO-abliterated IQ3_XXS instead (refusal direction transplanted from the
+  # OrcaRouter model into ISTA-DASLab's GSQ-RCO quant; ~40 GiB expert arena). Its
+  # config (parallel 2 + vision, 200K) is written by the seed-strata-config
+  # initContainer when /data/packs/sc117-iq3_xxs, the SC117 GGUFs and the mmproj
+  # are present. See TUNING.md.
   MODEL: "IQ3_XXS"
-  MODEL_VARIANT: "orca"
+  MODEL_VARIANT: "sc117"
   CONTEXT: "131072"
   KV: "int8"
   VISION: "cpu"
