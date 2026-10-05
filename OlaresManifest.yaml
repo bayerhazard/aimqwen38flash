@@ -4,10 +4,10 @@ apiVersion: 'v3'
 metadata:
   name: aimqwen38flash
   icon: https://raw.githubusercontent.com/bayerhazard/aimqwen38flash/main/icon.png
-  description: "Qwen3.8-Flash-Next Uncensored (125B MoE), GSQ-RCO-abliterated, served locally with the Strata engine"
+  description: "Qwen3.8-Flash-Next Uncensored (125B MoE), GSQ-RCO"
   appid: aimqwen38flash
   title: AIM Qwen3.8 Flash Next
-  version: '26.10.7'
+  version: '26.10.8'
   categories:
     - AI
 sharedEntrances:
@@ -35,11 +35,7 @@ spec:
   onlyAdmin: true
   versionName: 'Strata 0.1.39 · Qwen3.8-Flash-Next GSQ-RCO-abliterated IQ3_XXS'
   upgradeDescription: |
-    26.10.7 Switched to the SC117 GSQ-RCO-abliterated quant: the same refusal-free
-    behaviour (the abliteration is transplanted from the OrcaRouter model), but the
-    GSQ-RCO expert arena needs ~40 GiB instead of ~50 GiB - ~10 GiB less host RAM at
-    the same 200K INT8 KV and throughput. Built for Olares 1.12.6.
-    26.10.5 Context restored to 200K with parallel 2 + vision (67 GiB container). Built for Olares 1.12.6.
+    26.10.1 Initial Release for AImighty
   fullDescription: |
     **Model Overview**
     AImighty flagship stack. Qwen3.8-Flash-Next is a 125B-parameter sparse
@@ -56,6 +52,7 @@ spec:
     - KV cache 200,000 (INT8)
     - Parallel 2 (two conversations at once)
     - Image encoder (CPU)
+    - Performance: 100 - 110 t/s
     - OpenAI- and Anthropic-compatible API
 
     **API**
