@@ -19,17 +19,17 @@ engine:
 olaresEnv:
   MODEL_NAME: "qwen3.8-flash-next"
   MODEL_MODE: "chat"
-  MODEL_SUPPORTS: "thinking,tools"
+  MODEL_SUPPORTS: "thinking,tools,vision"
   # MODEL selects the Strata setup path (IQ3_XXS = GSQ-RCO base, auto-download).
   # MODEL_VARIANT=orca pins the pre-seeded, manually packed OrcaRouter
-  # abliterated IQ3_XXS instead (text-only, no vision); its config is written by
-  # the seed-strata-config initContainer when /data/packs/orca-iq3_xxs and the
-  # Orca GGUFs are present. See TUNING.md.
+  # abliterated IQ3_XXS instead; its config (parallel 2 + vision, 131K) is written
+  # by the seed-strata-config initContainer when /data/packs/orca-iq3_xxs, the
+  # Orca GGUFs and the mmproj are present. See TUNING.md.
   MODEL: "IQ3_XXS"
   MODEL_VARIANT: "orca"
-  CONTEXT: "200000"
+  CONTEXT: "131072"
   KV: "int8"
-  VISION: "no"
+  VISION: "cpu"
   LOW_RAM: "off"
   API_KEY: ""
   HF_ENDPOINT: "https://huggingface.co/"

@@ -73,7 +73,8 @@ spec:
               set -e
               ORCA=/data/models/orca-iq3_xxs
               SHARD="$ORCA/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf"
-              if [ -d /data/packs/orca-iq3_xxs ] && [ -f "$SHARD" ]; then
+              MMPROJ=/data/models/mmproj-Qwen3.8-Flash-Next-BF16.gguf
+              if [ -d /data/packs/orca-iq3_xxs ] && [ -f "$SHARD" ] && [ -f "$MMPROJ" ]; then
                 cat > /data/config/strata-iq3_xxs.json <<'JSON'
               {
                "exe": "/opt/strata/engine/strata",
@@ -87,10 +88,15 @@ spec:
                 "--spec", "4",
                 "--spec-min-p", "0.70",
                 "--mtp", "/data/mtp/rt",
-                "--max-context", "200000",
+                "--max-context", "131072",
                 "--kv", "int8",
                 "--suffix-draft", "8",
-                "--pool-workers", "15"
+                "--pool-workers", "15",
+                "--kv-resident", "32768",
+                "--conversation-cache-mib", "1024",
+                "--conversation-cache-slots", "2",
+                "--vision",
+                "--vram-reserve-mib", "1024"
                ],
                "cwd": "/opt/strata",
                "tokenizer": "/data/packs/orca-iq3_xxs/tokenizer",
@@ -98,13 +104,22 @@ spec:
                "port": 8000,
                "host": "0.0.0.0",
                "aliases": ["qwen3.8-flash-next"],
+               "parallel": 2,
                "reasoning_budget_tokens": 8192,
-               "fit_max_tokens": true
+               "fit_max_tokens": true,
+               "vision": {
+                "exe": "/opt/strata/engine/strata-vision",
+                "mmproj": "/data/models/mmproj-Qwen3.8-Flash-Next-BF16.gguf",
+                "model": "/data/models/orca-iq3_xxs/Qwen3.8-Flash-Next-Uncensored-IQ3_XXS-00001-of-00002.gguf",
+                "gpu": false,
+                "max_tokens": 300,
+                "threads": 12
+               }
               }
               JSON
-                echo "seeded Orca config"
+                echo "seeded Orca config (parallel 2 + vision, 131K)"
               else
-                echo "Orca files missing (packs/orca-iq3_xxs + models/orca-iq3_xxs); leaving config to setup"
+                echo "Orca files missing (packs/orca-iq3_xxs + models/orca-iq3_xxs + mmproj); leaving config to setup"
               fi
           securityContext:
             runAsUser: 0
