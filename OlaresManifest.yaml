@@ -7,7 +7,7 @@ metadata:
   description: "Qwen3.8-Flash-Next Uncensored (125B MoE), GSQ-RCO"
   appid: aimqwen38flash
   title: AIM Qwen3.8 Flash Next
-  version: '26.10.11'
+  version: '26.10.12'
   categories:
     - AI
 sharedEntrances:
@@ -35,6 +35,7 @@ spec:
   onlyAdmin: true
   versionName: 'Strata 0.1.39 · Qwen3.8-Flash-Next GSQ-RCO-abliterated IQ3_XXS'
   upgradeDescription: |
+    26.10.12: RAM request aligned to actual usage (8Gi -> 44Gi); the scheduler now reserves real headroom. No engine change. Built for Olares 1.12.6.
     26.10.1 Initial Release for AImighty
   fullDescription: |
     **Model Overview**
@@ -79,7 +80,7 @@ spec:
     - amd64
   requiredCpu: "4"
   limitedCpu: "16"
-  requiredMemory: "8Gi"
+  requiredMemory: "44Gi"
   limitedMemory: "67Gi"
   requiredDisk: 50Mi
   limitedDisk: 500Gi
