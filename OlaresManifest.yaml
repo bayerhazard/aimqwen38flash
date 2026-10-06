@@ -52,7 +52,7 @@ spec:
     - KV cache 200,000 (INT8)
     - Parallel 2 (two conversations at once)
     - Image encoder (CPU)
-    - Performance: 100 - 110 t/s
+    - Performance: 100 - 120 t/s
     - OpenAI- and Anthropic-compatible API
 
     **API**
@@ -153,19 +153,19 @@ envs:
     type: string
     editable: false
     applyOnChange: false
-    default: "orca"
+    default: "sc117"
     options:
-      - title: "OrcaRouter Uncensored (abliterated, parallel 2 + vision)"
-        value: "orca"
+      - title: "SC117 GSQ-RCO-abliterated (parallel 2 + vision, 200K)"
+        value: "sc117"
       - title: "GSQ-RCO base (upstream, vision-capable)"
         value: ""
-    description: "orca pins the pre-seeded abliterated IQ3_XXS config (parallel 2 + vision, 131K; seed-strata-config initContainer); empty uses the upstream GSQ-RCO setup path."
+    description: "sc117 pins the pre-seeded abliterated GSQ-RCO IQ3_XXS config (parallel 2 + vision, 200K; seed-strata-config initContainer); empty uses the upstream GSQ-RCO setup path."
   - envName: CONTEXT
     required: true
     type: string
     editable: true
     applyOnChange: true
-    default: "131072"
+    default: "200000"
     description: "Context window in tokens (max 262144; a change takes effect on restart and needs REINSTALL=1 to rewrite the config)."
   - envName: KV
     required: false

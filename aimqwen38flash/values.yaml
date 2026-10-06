@@ -29,7 +29,7 @@ olaresEnv:
   # are present. See TUNING.md.
   MODEL: "IQ3_XXS"
   MODEL_VARIANT: "sc117"
-  CONTEXT: "131072"
+  CONTEXT: "200000"
   KV: "int8"
   VISION: "cpu"
   LOW_RAM: "off"
