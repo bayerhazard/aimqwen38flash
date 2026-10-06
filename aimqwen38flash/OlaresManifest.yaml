@@ -7,7 +7,7 @@ metadata:
   description: "Qwen3.8-Flash-Next Uncensored (125B MoE), GSQ-RCO"
   appid: aimqwen38flash
   title: AIM Qwen3.8 Flash Next
-  version: '26.10.8'
+  version: '26.10.10'
   categories:
     - AI
 sharedEntrances:
