@@ -38,6 +38,12 @@ jobs:
       - name: Clone Strata at the pin
         run: git clone --depth 1 --branch "$PIN" https://github.com/Niko1221/Strata.git strata-src
 
+      - name: Force AVX2 floor (portable build for Arrow Lake, no AVX-512)
+        run: |
+          sed -i 's/"-DSTRATA_ENABLE_CUDA=ON",/"-DSTRATA_ENABLE_CUDA=ON", "-DSTRATA_PORTABLE=ON",/' strata-src/Dockerfile
+          sed -i 's/"-DSTRATA_VISION_CUDA=ON",/"-DSTRATA_VISION_CUDA=ON", "-DSTRATA_PORTABLE=ON",/' strata-src/Dockerfile
+          grep -n STRATA_PORTABLE strata-src/Dockerfile
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
