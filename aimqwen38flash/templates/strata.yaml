@@ -107,7 +107,7 @@ spec:
                "port": 8000,
                "host": "0.0.0.0",
                "aliases": ["qwen3.8-flash-next"],
-               "parallel": 2,
+               "parallel": 1,
                "reasoning_budget_tokens": 8192,
                "fit_max_tokens": true,
                "vision": {
@@ -120,7 +120,7 @@ spec:
                }
               }
               JSON
-                echo "seeded SC117 config (GSQ-RCO abliterated, parallel 2 + vision)"
+                echo "seeded SC117 config (GSQ-RCO abliterated, single stream + vision)"
               else
                 echo "SC117 files missing (packs/sc117-iq3_xxs + models/sc117-iq3_xxs + mmproj); leaving config to setup"
               fi

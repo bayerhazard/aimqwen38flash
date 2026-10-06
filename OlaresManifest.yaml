@@ -7,7 +7,7 @@ metadata:
   description: "Qwen3.8-Flash-Next Uncensored (125B MoE), GSQ-RCO"
   appid: aimqwen38flash
   title: AIM Qwen3.8 Flash Next
-  version: '26.10.10'
+  version: '26.10.11'
   categories:
     - AI
 sharedEntrances:
@@ -41,7 +41,7 @@ spec:
     AImighty flagship stack. Qwen3.8-Flash-Next is a 125B-parameter sparse
     Mixture-of-Experts model with thinking and tool-calling. This build serves
     GSQ-RCO-abliterated: a refusal-free assistant tuned for long-horizon agentic and
-    coding work, with image understanding and two concurrent conversation slots.
+    coding work, with image understanding.
 
     **Inference Engine**
     Strata runs the model on one consumer GPU: the experts live in system RAM, the
@@ -50,7 +50,7 @@ spec:
 
     **Key Features**
     - KV cache 200,000 (INT8)
-    - Parallel 2 (two conversations at once)
+    - Single stream with MTP speculative decoding
     - Image encoder (CPU)
     - Performance: 100 - 120 t/s
     - OpenAI- and Anthropic-compatible API
@@ -155,11 +155,11 @@ envs:
     applyOnChange: false
     default: "sc117"
     options:
-      - title: "SC117 GSQ-RCO-abliterated (parallel 2 + vision, 200K)"
+      - title: "SC117 GSQ-RCO-abliterated (single stream + vision, 200K)"
         value: "sc117"
       - title: "GSQ-RCO base (upstream, vision-capable)"
         value: ""
-    description: "sc117 pins the pre-seeded abliterated GSQ-RCO IQ3_XXS config (parallel 2 + vision, 200K; seed-strata-config initContainer); empty uses the upstream GSQ-RCO setup path."
+    description: "sc117 pins the pre-seeded abliterated GSQ-RCO IQ3_XXS config (single stream + vision, 200K; seed-strata-config initContainer); empty uses the upstream GSQ-RCO setup path."
   - envName: CONTEXT
     required: true
     type: string
