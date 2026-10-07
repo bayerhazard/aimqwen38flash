@@ -40,8 +40,11 @@ jobs:
 
       - name: Force AVX2 floor (portable build for Arrow Lake, no AVX-512)
         run: |
+          # v0.1.40.2's Dockerfile hardcodes -DSTRATA_PORTABLE=OFF for the vision encoder
+          # (native for the build host = an AVX-512 GHA runner) -> flip it back to ON, else
+          # the encoder SIGILLs on Arrow Lake.  Also pin the engine to the AVX2 baseline.
+          sed -i 's/-DSTRATA_PORTABLE=OFF/-DSTRATA_PORTABLE=ON/g' strata-src/Dockerfile
           sed -i 's/"-DSTRATA_ENABLE_CUDA=ON",/"-DSTRATA_ENABLE_CUDA=ON", "-DSTRATA_PORTABLE=ON",/' strata-src/Dockerfile
-          sed -i 's/"-DSTRATA_VISION_CUDA=ON",/"-DSTRATA_VISION_CUDA=ON", "-DSTRATA_PORTABLE=ON",/' strata-src/Dockerfile
           grep -n STRATA_PORTABLE strata-src/Dockerfile
 
       - name: Set up Docker Buildx
